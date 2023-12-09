@@ -1,0 +1,50 @@
+version: '3.3'
+
+services:
+  mysql:
+    image: mysql:latest
+    restart: always
+    networks:
+      - bankblaze-net
+    environment:
+      MYSQL_DATABASE: 'bankblaze'
+      MYSQL_USER: 'service'
+      MYSQL_PASSWORD: 'Asdf1234'
+      MYSQL_ROOT_PASSWORD: 'tg7JU3IU'
+    volumes:
+      - ./bankblaze.sql:/docker-entrypoint-initdb.d/1.sql
+      - bankblaze-database:/var/lib/mysql
+
+  application:
+    build: .
+    restart: always
+    networks:
+      - bankblaze-net
+    environment:
+      - spring.datasource.url=jdbc:mysql://mysql:3306/bankblaze
+    ports:
+      - '8082:8080'
+    expose:
+      - '8082'
+    depends_on:
+      - mysql
+
+  tunnel:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: '2ZIX0s2qSu63tTh3EZteknWd0Y9_2dAFdtHKbFFEn9oq3ZWcW'
+    networks:
+      - bankblaze-net
+    command:
+      - "http"
+      - "application:8080"
+      - "--domain=pleasant-measured-meerkat.ngrok-free.app"
+    ports:
+      - '4042:4040'
+
+volumes:
+  bankblaze-database:
+
+networks:
+  bankblaze-net:
